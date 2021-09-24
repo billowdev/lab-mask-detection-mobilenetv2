@@ -170,7 +170,7 @@ for images, labels in training.take(1):
 
 
     
-![png](output_17_0.png)
+<!-- ![png](output_17_0.png) -->
     
 
 
@@ -183,7 +183,7 @@ for images, labels in training.take(1):
 
 
     
-![png](output_18_0.png)
+<!-- ![png](output_18_0.png) -->
     
 
 
