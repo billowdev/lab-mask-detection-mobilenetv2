@@ -39,9 +39,9 @@ while True:
 		(x, y, w, h) = [v * size for v in f] # Scale the shapesize backup
 		#Save just the rectangle faces in SubRecFaces
 		face_imgg = img[y:y+h, x:x+w]
-		resized = cv2.resize(face_img,(150,150))
+		resized = cv2.resize(face_img,(224,224))
 		normalized = resized/255.0
-		reshaped = np.reshape(normalized,(1,150,150,3))
+		reshaped = np.reshape(normalized,(1,224,224,3))
 		reshaped = np.vstack([reshaped])
 		result = model.predict(reshaped)
 		# ผลลัพธ์
