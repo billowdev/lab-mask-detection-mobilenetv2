@@ -25,8 +25,8 @@ f_haar_path = os.path.join(dirname, 'haarcascade_frontalface_default.xml') # pat
 classifier = cv2.CascadeClassifier(f_haar_path)
 
 while True:
-	(rval, img) = webcam.read()
-	img=cv2.flip(img,1,1) # สลับเพื่อให้เหมือนส่งกระจก
+	img = webcam.read()
+	img = cv2.flip(img,1,1) # สลับเพื่อให้เหมือนส่งกระจก
 
 	# ลดขนาดภาพเพื่อความเร็ว
 	mini = cv2.resize(img, (img.shape[1] // size, img.shape[0] // size))
@@ -34,26 +34,40 @@ while True:
 	# สำหรับตรวจจับใบหน้า
 	faces = classifier.detectMultiScale(mini)
 
-	# วาดสี่เหลี่ยมรอบใบหน้า
-	for f in faces:
-		(x, y, w, h) = [v * size for v in f] # Scale the shapesize backup
-		#Save just the rectangle faces in SubRecFaces
-		face_imgg = img[y:y+h, x:x+w]
-		resized = cv2.resize(face_img,(224,224))
-		normalized = resized/255.0
-		reshaped = np.reshape(normalized,(1,224,224,3))
-		reshaped = np.vstack([reshaped])
-		result = model.predict(reshaped)
-		# ผลลัพธ์
-		print(result)
-		
-		label=np.argmax(result,axis=1)[0]
-		cv2.rectangle(img,(x,y),(x+w,y+h),color_dict[label],2)
-		cv2.rectangle(img,(x,y-40),(x+w,y),color_dict[label],-1)
-		cv2.putText(img, labels_dict[label], (x, y-10),cv2.FONT_HERSHEY_SIMPLEX,0.8,(255,255,255),2)
-		
-	# แสดงภาพ
-	cv2.imshow('liveimg',   img)
+	# gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+	new_img = cv2.resize(frame, (frame.shape[1] // 1, frame.shape[0] // 1)) # resize
+	
+	# สำหรับตรวจจับใบหน้า
+	faces = face_detector.detectMultiScale(new_img)
+
+	for x, y, w, h in faces:
+		face_img = new_img[y:x+h, x:x+w] # ดึงพิกัดใบหน้า
+		resized = cv2.resize(face_img, (224, 224)) # ให้ภาพใบหน้า fit กับโมเดล (224,224)
+		img_array = tf.keras.preprocessing.image.img_to_array(resized) # แปลงใบหน้าเป็น array
+		img_array = tf.expand_dims(img_array, 0) #ขยายมิติภาพฟิตกับโมดล
+		predictions = model.predict(img_array) # ทำนายบน ROI (Region of Interest)
+		score = tf.nn.softmax(predictions[0]) # ผลลัพธ์
+		label = np.argmax(score)
+
+		# Post-Processing
+
+		if label == 0:
+		cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+		cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+		elif label == 1:
+		cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+		cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+		else:
+		None
+		# pass
+		# แสดงผลหลังจากทำนาย
+		new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2RGB)
+		cv2.imshow('liveimg', new_img)
+		# eval_js('showimg("{}")'.format(image2byte(new_img)))
+		print(np.argmax(score), 100 * np.max(score))
+		time.sleep(1)
+
+	
 	key = cv2.waitKey(10)
 
 	# if Esc key is press then break out of the loop 
