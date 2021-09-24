@@ -135,7 +135,7 @@ training = tf.keras.preprocessing.image_dataset_from_directory(
 validation = tf.keras.preprocessing.image_dataset_from_directory(
     data_dir,
     validation_split = 0.3,
-    subset = 'training',
+    subset = 'validation',
     seed = 123,
     image_size = (height, width),
     batch_size = batch_size
