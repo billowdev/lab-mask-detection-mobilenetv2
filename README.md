@@ -1,6 +1,9 @@
 # Project-Mask-Detection
 Digital Image Processing
 
+## Model 
+- image shape 224 x 224
+- mask_detection_model.h5
 
 ## train model, predict and face detection
 - https://colab.research.google.com/drive/1YlhAtPXkphN7kAU5gZQvG3kFvzExMSFC?usp=sharing
