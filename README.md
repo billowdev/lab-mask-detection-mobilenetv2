@@ -1,16 +1,12 @@
 # Project-Mask-Detection
 Digital Image Processing
 
+
 ## train model, predict and face detection
 - https://colab.research.google.com/drive/1YlhAtPXkphN7kAU5gZQvG3kFvzExMSFC?usp=sharing
 
-## face detection use mask_model
-- https://colab.research.google.com/drive/1HFf9aDaNuNgP9gF6jUPuy6BmVA_0FeUT?usp=sharing
-
-
-
 <details>
-<summary>train model, predict and face detection</summary>
+<summary> Project_Mask_Detection_Train_Model.ipynb </summary>
 <br>
 # Introduction
 
@@ -878,6 +874,197 @@ while True:
 ```python
 |
 ```
-
-
 </details> 
+
+        
+-----------------------------------------------------------------------------------------------------------
+
+## face detection use mask_model
+- https://colab.research.google.com/drive/1HFf9aDaNuNgP9gF6jUPuy6BmVA_0FeUT?usp=sharing
+
+<details>
+<summary>Face_Detection_Mask.jpynb</summary>
+<br>
+
+# Face Detection Mask
+
+reference videocapture
+  - AI บ้าน บ้าน (รศ.ดร.ปริญญา สงวนสัตย์)
+
+- https://www.youtube.com/watch?v=1VziTgVt4GQ&t=11s
+
+- https://colab.research.google.com/drive/1v4zM9Gcxt6r5pHGN8HS6CYsLTt1VoZsG
+
+
+
+```python
+from IPython.display import display, Javascript
+from google.colab.output import eval_js
+from base64 import b64decode, b64encode
+import numpy as np
+from PIL import Image
+import io
+```
+
+
+```python
+# haarcascade
+!wget https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
+# load model
+!wget https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model.h5
+```
+
+    --2021-09-24 12:26:35--  https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
+    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 930127 (908K) [text/plain]
+    Saving to: ‘haarcascade_frontalface_default.xml.1’
+    
+    haarcascade_frontal 100%[===================>] 908.33K  --.-KB/s    in 0.05s   
+    
+    2021-09-24 12:26:35 (19.1 MB/s) - ‘haarcascade_frontalface_default.xml.1’ saved [930127/930127]
+    
+    --2021-09-24 12:26:35--  https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model.h5
+    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.110.133, 185.199.109.133, ...
+    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 43065952 (41M) [application/octet-stream]
+    Saving to: ‘mask_detection_model.h5.1’
+    
+    mask_detection_mode 100%[===================>]  41.07M   137MB/s    in 0.3s    
+    
+    2021-09-24 12:26:35 (137 MB/s) - ‘mask_detection_model.h5.1’ saved [43065952/43065952]
+    
+    
+
+
+```python
+## โค้ด สำหรับวิดีโอแคปเจอร์
+
+def VideoCapture():
+  js = Javascript('''
+    async function create(){
+      div = document.createElement('div');
+      document.body.appendChild(div);
+
+      video = document.createElement('video');
+      video.setAttribute('playsinline', '');
+
+      div.appendChild(video);
+
+      stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: "environment"}});
+      video.srcObject = stream;
+
+      await video.play();
+
+      canvas =  document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+
+      div_out = document.createElement('div');
+      document.body.appendChild(div_out);
+      img = document.createElement('img');
+      div_out.appendChild(img);
+    }
+
+    async function capture(){
+        return await new Promise(function(resolve, reject){
+            pendingResolve = resolve;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            result = canvas.toDataURL('image/jpeg', 0.8);
+            pendingResolve(result);
+        })
+    }
+
+    function showimg(imgb64){
+        img.src = "data:image/jpg;base64," + imgb64;
+    }
+
+  ''')
+  display(js)
+
+def byte2image(byte):
+  jpeg = b64decode(byte.split(',')[1])
+  im = Image.open(io.BytesIO(jpeg))
+  return np.array(im)
+
+def image2byte(image):
+  image = Image.fromarray(image)
+  buffer = io.BytesIO()
+  image.save(buffer, 'jpeg')
+  buffer.seek(0)
+  x = b64encode(buffer.read()).decode('utf-8')
+  return x
+
+```
+
+
+```python
+import cv2
+import numpy as np
+from keras.models import load_model
+import tensorflow as tf
+
+model = load_model("./mask_detection_model.h5")
+face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+# classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+```
+
+
+```python
+from google.colab.patches import cv2_imshow
+import time
+# model shape  shape=(None, 224, 224, 3)
+
+labels_dict={0:'without mask',1:'mask'}
+color_dict={0:(0,0,255),1:(0,255,0)}
+
+VideoCapture()
+eval_js('create()')
+
+while True:
+    byte = eval_js('capture()')
+    frame = byte2image(byte)
+    frame=cv2.flip(frame,1,1) # สลับเพื่อให้ไม่เหมือนกระจก
+    # gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    new_img = cv2.resize(frame, (frame.shape[1] // 1, frame.shape[0] // 1)) # resize
+    # สำหรับตรวจจับใบหน้า
+    faces = face_detector.detectMultiScale(new_img)
+    for x, y, w, h in faces:
+      face_img = new_img[y:x+h, x:x+w] # ดึงพิกัดใบหน้า
+      resized = cv2.resize(face_img, (224, 224)) # ให้ภาพใบหน้า fit กับโมเดล (224,224)
+      img_array = tf.keras.preprocessing.image.img_to_array(resized) # แปลงใบหน้าเป็น array
+      img_array = tf.expand_dims(img_array, 0) #ขยายมิติภาพฟิตกับโมดล
+      predictions = model.predict(img_array) # ทำนายบน ROI (Region of Interest)
+      score = tf.nn.softmax(predictions[0]) # ผลลัพธ์
+      label = np.argmax(score)
+
+      if label == 0:
+        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+      elif label == 1:
+        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+      else:
+        None
+      # pass
+      # แสดงผลหลังจากทำนาย
+      new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2RGB)
+      cv2_imshow(new_img)
+      # eval_js('showimg("{}")'.format(image2byte(new_img)))
+      print(np.argmax(score), 100 * np.max(score))
+      time.sleep(1)
+
+    eval_js('showimg("{}")'.format(image2byte(frame)))
+
+```
+
+
+```python
+|
+```
+
+    
+</details>
