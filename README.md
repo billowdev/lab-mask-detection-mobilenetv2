@@ -4,7 +4,8 @@ Digital Image Processing
 ## Model 
 - image shape 224 x 224
 - mask_detection_model.h5
-
+- MobileNetV2
+- 
 ## train model, predict and face detection
 - https://colab.research.google.com/drive/1YlhAtPXkphN7kAU5gZQvG3kFvzExMSFC?usp=sharing
 
@@ -24,6 +25,10 @@ dataset - https://www.kaggle.com/omkargurav/face-mask-dataset
 # https://medium.com/super-ai-engineer/kora-%E0%B9%80%E0%B8%84%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%94%E0%B8%B5-%E0%B9%86-%E0%B8%AA%E0%B8%B3%E0%B8%AB%E0%B8%A3%E0%B8%B1%E0%B8%9A%E0%B8%84%E0%B8%99%E0%B8%A3%E0%B8%B1%E0%B8%81-google-colab-137c193641c0
 !pip install -q kora # https://github.com/korakot/kora
 ```
+
+    [K     |████████████████████████████████| 57 kB 2.5 MB/s 
+    [K     |████████████████████████████████| 56 kB 3.4 MB/s 
+    [?25h
 
 
 ```python
@@ -67,7 +72,7 @@ kaggle.search('omkargurav/face-mask-dataset')
       <td>Face Mask Detection Dataset</td>
       <td>163MB</td>
       <td>2020-07-31 18:34:42</td>
-      <td>5049</td>
+      <td>5054</td>
     </tr>
   </tbody>
 </table>
@@ -81,9 +86,11 @@ kaggle.download('omkargurav/face-mask-dataset')
 ```
 
     Downloading face-mask-dataset.zip to /content
-     96% 156M/163M [00:01<00:00, 123MB/s]
-    100% 163M/163M [00:01<00:00, 129MB/s]
+     99% 162M/163M [00:05<00:00, 37.5MB/s]
+    100% 163M/163M [00:05<00:00, 32.1MB/s]
     
+
+# Face mask detection using computer vision
 
 
 ```python
@@ -91,9 +98,7 @@ import tensorflow as tf
 import numpy as np 
 ```
 
-# Face mask detection using computer vision
-
-## Get data - load dataset
+### Get data - load dataset
 
 - หน้าที่มีหน้ากาก กับหน้าที่ไม่มีหน้ากาก
 - ใช้ภาพทดสอบจาก image_dataset_from_ditectory() ของ keras.preprocssing
@@ -143,7 +148,7 @@ validation = tf.keras.preprocessing.image_dataset_from_directory(
 ```
 
     Found 7553 files belonging to 2 classes.
-    Using 5288 files for training.
+    Using 2265 files for validation.
     
 
 
@@ -157,7 +162,7 @@ print(training)
     <BatchDataset shapes: ((None, 224, 224, 3), (None,)), types: (tf.float32, tf.int32)>
     
 
-## เช็คดูภาพใน ชุดข้อมูล
+Check Image in Dataset
 
 
 ```python
@@ -169,7 +174,7 @@ for images, labels in training.take(1):
 
 
     
-<!-- ![png](output_17_0.png) -->
+![png](output_17_0.png)
     
 
 
@@ -182,7 +187,20 @@ for images, labels in training.take(1):
 
 
     
-<!-- ![png](output_18_0.png) -->
+![png](output_18_0.png)
+    
+
+
+
+```python
+for images, labels in training.take(1):
+  plt.imshow(images[3].numpy().astype('uint8'))
+  plt.title(classes[labels[3]])
+```
+
+
+    
+![png](output_19_0.png)
     
 
 
@@ -203,7 +221,7 @@ model = MobileNetV2(weights = 'imagenet')
     14548992/14536120 [==============================] - 0s 0us/step
     
 
-## รันโมเดล
+รันโมเดล (compile)
 
 
 ```python
@@ -549,12 +567,8 @@ model.summary()
     __________________________________________________________________________________________________
     
 
+### Training the model
 
-```python
-
-```
-
-# Training the model
 
 https://keras.rstudio.com/reference/fit.html#arguments
 
@@ -573,17 +587,6 @@ Number of epochs to train the model. Note that in conjunction with initial_epoch
 
 ```python
 # train 3 ครั้ง
-# face_mask_detection = model.fit(training, validation_data= validation, epochs=3)
-```
-
-
-```python
-# train 1 ครั้ง
-face_mask_detection = model.fit(training, validation_data= validation, epochs=1)
-```
-
-
-```python
 face_mask_detection = model.fit(training, validation_data= validation, epochs=3)
 ```
 
@@ -594,28 +597,24 @@ face_mask_detection = model.fit(training, validation_data= validation, epochs=3)
       '"`sparse_categorical_crossentropy` received `from_logits=True`, but '
     
 
-    166/166 [==============================] - 1161s 7s/step - loss: 0.1547 - accuracy: 0.9703 - val_loss: 4.2973 - val_accuracy: 0.8050
+    166/166 [==============================] - 104s 401ms/step - loss: 0.1834 - accuracy: 0.9635 - val_loss: 16.2736 - val_accuracy: 0.5055
     Epoch 2/3
-    166/166 [==============================] - 1147s 7s/step - loss: 0.0549 - accuracy: 0.9837 - val_loss: 0.6734 - val_accuracy: 0.9276
+    166/166 [==============================] - 65s 388ms/step - loss: 0.0259 - accuracy: 0.9915 - val_loss: 3.1604 - val_accuracy: 0.7377
     Epoch 3/3
-    166/166 [==============================] - 1150s 7s/step - loss: 0.0243 - accuracy: 0.9930 - val_loss: 1.1814 - val_accuracy: 0.8561
+    166/166 [==============================] - 65s 387ms/step - loss: 0.0243 - accuracy: 0.9936 - val_loss: 0.9901 - val_accuracy: 0.9002
     
 
 - ETA คือเวลาที่คาดว่า กำลังจะเสร็จ
 - loss คือ ค่าความสูญเสีย (ผิดพลาด) 
 - accuracy คือค่าความถูกต้อง
 
-# Predicting
+### Predicting
 
 
 ```python
+# for upload image
 from google.colab import files
-
 uploaded = files.upload()
-
-# for fn in uploaded.keys():
-#   print('User uploaded file "{name}" with length {length} bytes'.format(
-#       name=fn, length=len(uploaded[fn])))
 ```
 
 
@@ -634,7 +633,6 @@ uploaded = files.upload()
 
 
 ```python
-
 # โหลดภาพมา
 # image = tf.keras.preprocessing.image.load_img(image_path)
 img = tf.keras.preprocessing.image.load_img('testimg.jpg', target_size=(height, width))
@@ -663,7 +661,7 @@ score = tf.nn.softmax(predictions[0])
 
 for i in range(15):
   ran = random.randint(1, len(score))
-  res= score[ran]*100000
+  res = score[ran]*100000
   print(res)
 print(type(res))
 
@@ -700,14 +698,6 @@ model.save('mask_detection_model', save_format='h5')
 
 # Face Detection
 
-reference videocapture
-  - AI บ้าน บ้าน (รศ.ดร.ปริญญา สงวนสัตย์)
-
-- https://www.youtube.com/watch?v=1VziTgVt4GQ&t=11s
-
-- https://colab.research.google.com/drive/1v4zM9Gcxt6r5pHGN8HS6CYsLTt1VoZsG
-
-
 
 ```python
 from IPython.display import display, Javascript
@@ -722,37 +712,30 @@ import io
 ```python
 # haarcascade
 !wget https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
-# load model
-!wget https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model.h5
+# load model (If not running the code part Train Model)
+# !wget https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model
 ```
 
-    --2021-09-24 12:26:35--  https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+    --2021-09-24 14:34:11--  https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
+    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.110.133, 185.199.109.133, ...
+    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
     HTTP request sent, awaiting response... 200 OK
     Length: 930127 (908K) [text/plain]
-    Saving to: ‘haarcascade_frontalface_default.xml.1’
+    Saving to: ‘haarcascade_frontalface_default.xml’
     
-    haarcascade_frontal 100%[===================>] 908.33K  --.-KB/s    in 0.05s   
+    haarcascade_frontal 100%[===================>] 908.33K  --.-KB/s    in 0.09s   
     
-    2021-09-24 12:26:35 (19.1 MB/s) - ‘haarcascade_frontalface_default.xml.1’ saved [930127/930127]
-    
-    --2021-09-24 12:26:35--  https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model.h5
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.110.133, 185.199.109.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 43065952 (41M) [application/octet-stream]
-    Saving to: ‘mask_detection_model.h5.1’
-    
-    mask_detection_mode 100%[===================>]  41.07M   137MB/s    in 0.3s    
-    
-    2021-09-24 12:26:35 (137 MB/s) - ‘mask_detection_model.h5.1’ saved [43065952/43065952]
+    2021-09-24 14:34:12 (9.93 MB/s) - ‘haarcascade_frontalface_default.xml’ saved [930127/930127]
     
     
 
 
 ```python
-## โค้ด สำหรับวิดีโอแคปเจอร์
+## โค้ด videocapture 
+# reference 
+# - AI บ้าน บ้าน (รศ.ดร.ปริญญา สงวนสัตย์)
+# - https://www.youtube.com/watch?v=1VziTgVt4GQ&t=11s
+# - https://colab.research.google.com/drive/1v4zM9Gcxt6r5pHGN8HS6CYsLTt1VoZsG
 
 def VideoCapture():
   js = Javascript('''
@@ -814,20 +797,21 @@ def image2byte(image):
 
 
 ```python
+# Pre-processing
 import cv2
 import numpy as np
 from keras.models import load_model
 import tensorflow as tf
-
-model = load_model("./mask_detection_model.h5")
+from google.colab.patches import cv2_imshow
+import time
+model = load_model("./mask_detection_model")
 face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-# classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 ```
 
 
 ```python
-from google.colab.patches import cv2_imshow
-import time
+# processing
+
 # model shape  shape=(None, 224, 224, 3)
 
 labels_dict={0:'without mask',1:'mask'}
@@ -835,11 +819,10 @@ color_dict={0:(0,0,255),1:(0,255,0)}
 
 VideoCapture()
 eval_js('create()')
-
 while True:
     byte = eval_js('capture()')
     frame = byte2image(byte)
-    frame=cv2.flip(frame,1,1) # สลับเพื่อให้ไม่เหมือนกระจก
+    frame = cv2.flip(frame,1,1) # สลับเพื่อให้ไม่เหมือนกระจก
     # gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     new_img = cv2.resize(frame, (frame.shape[1] // 1, frame.shape[0] // 1)) # resize
     # สำหรับตรวจจับใบหน้า
@@ -852,6 +835,8 @@ while True:
       predictions = model.predict(img_array) # ทำนายบน ROI (Region of Interest)
       score = tf.nn.softmax(predictions[0]) # ผลลัพธ์
       label = np.argmax(score)
+
+      # Post-Processing
 
       if label == 0:
         cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
@@ -870,13 +855,8 @@ while True:
       time.sleep(1)
 
     eval_js('showimg("{}")'.format(image2byte(frame)))
-
 ```
 
-
-```python
-|
-```
 </details> 
 
         
@@ -914,36 +894,16 @@ import io
 # haarcascade
 !wget https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
 # load model
-!wget https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model.h5
+!wget https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model
 ```
-
-    --2021-09-24 12:26:35--  https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 930127 (908K) [text/plain]
-    Saving to: ‘haarcascade_frontalface_default.xml.1’
-    
-    haarcascade_frontal 100%[===================>] 908.33K  --.-KB/s    in 0.05s   
-    
-    2021-09-24 12:26:35 (19.1 MB/s) - ‘haarcascade_frontalface_default.xml.1’ saved [930127/930127]
-    
-    --2021-09-24 12:26:35--  https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model.h5
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.110.133, 185.199.109.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 43065952 (41M) [application/octet-stream]
-    Saving to: ‘mask_detection_model.h5.1’
-    
-    mask_detection_mode 100%[===================>]  41.07M   137MB/s    in 0.3s    
-    
-    2021-09-24 12:26:35 (137 MB/s) - ‘mask_detection_model.h5.1’ saved [43065952/43065952]
-    
-    
 
 
 ```python
-## โค้ด สำหรับวิดีโอแคปเจอร์
+## โค้ด videocapture 
+# reference 
+# - AI บ้าน บ้าน (รศ.ดร.ปริญญา สงวนสัตย์)
+# - https://www.youtube.com/watch?v=1VziTgVt4GQ&t=11s
+# - https://colab.research.google.com/drive/1v4zM9Gcxt6r5pHGN8HS6CYsLTt1VoZsG
 
 def VideoCapture():
   js = Javascript('''
@@ -1005,20 +965,20 @@ def image2byte(image):
 
 
 ```python
+# Pre-processing
 import cv2
 import numpy as np
 from keras.models import load_model
 import tensorflow as tf
-
-model = load_model("./mask_detection_model.h5")
+from google.colab.patches import cv2_imshow
+import time
+model = load_model("./mask_detection_model")
 face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-# classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 ```
 
 
 ```python
-from google.colab.patches import cv2_imshow
-import time
+# processing
 # model shape  shape=(None, 224, 224, 3)
 
 labels_dict={0:'without mask',1:'mask'}
@@ -1026,11 +986,10 @@ color_dict={0:(0,0,255),1:(0,255,0)}
 
 VideoCapture()
 eval_js('create()')
-
 while True:
     byte = eval_js('capture()')
     frame = byte2image(byte)
-    frame=cv2.flip(frame,1,1) # สลับเพื่อให้ไม่เหมือนกระจก
+    frame = cv2.flip(frame,1,1) # สลับเพื่อให้ไม่เหมือนกระจก
     # gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     new_img = cv2.resize(frame, (frame.shape[1] // 1, frame.shape[0] // 1)) # resize
     # สำหรับตรวจจับใบหน้า
@@ -1043,6 +1002,8 @@ while True:
       predictions = model.predict(img_array) # ทำนายบน ROI (Region of Interest)
       score = tf.nn.softmax(predictions[0]) # ผลลัพธ์
       label = np.argmax(score)
+
+      # Post-Processing
 
       if label == 0:
         cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
@@ -1061,7 +1022,6 @@ while True:
       time.sleep(1)
 
     eval_js('showimg("{}")'.format(image2byte(frame)))
-
 ```
 
 
@@ -1069,5 +1029,4 @@ while True:
 |
 ```
 
-    
 </details>
