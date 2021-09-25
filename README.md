@@ -696,10 +696,14 @@ model.save('mask_detection_model', save_format='h5')
       category=CustomMaskWarning)
     
 
-# Face Detection
+# Face Detection Mask
+
+## Introduction
+
 
 
 ```python
+# library สำหรับใช่ videocapture
 from IPython.display import display, Javascript
 from google.colab.output import eval_js
 from base64 import b64decode, b64encode
@@ -710,24 +714,13 @@ import io
 
 
 ```python
-# haarcascade
+# โหลด haarcascade เพื่อช่วยในการตรวจจับใบหน้า
 !wget https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
-# load model (If not running the code part Train Model)
-# !wget https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model
+# โหลด model เพื่อทำการตรวจจับหน้ากาก
+!wget https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model
 ```
 
-    --2021-09-24 14:34:11--  https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.110.133, 185.199.109.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 930127 (908K) [text/plain]
-    Saving to: ‘haarcascade_frontalface_default.xml’
-    
-    haarcascade_frontal 100%[===================>] 908.33K  --.-KB/s    in 0.09s   
-    
-    2021-09-24 14:34:12 (9.93 MB/s) - ‘haarcascade_frontalface_default.xml’ saved [930127/930127]
-    
-    
+## Videocapture
 
 
 ```python
@@ -737,7 +730,7 @@ import io
 # - https://www.youtube.com/watch?v=1VziTgVt4GQ&t=11s
 # - https://colab.research.google.com/drive/1v4zM9Gcxt6r5pHGN8HS6CYsLTt1VoZsG
 
-def VideoCapture():
+def VideoCapture(): # ฟังก์ชันสำหรับเรียกใช้ VideoCapture()
   js = Javascript('''
     async function create(){
       div = document.createElement('div');
@@ -780,12 +773,12 @@ def VideoCapture():
   ''')
   display(js)
 
-def byte2image(byte):
+def byte2image(byte): # ฟังก์ชันสำหรับแปลงข้อมูล byte เป็นรูปภาพ
   jpeg = b64decode(byte.split(',')[1])
   im = Image.open(io.BytesIO(jpeg))
   return np.array(im)
 
-def image2byte(image):
+def image2byte(image): # ฟังก์ชันสำหรับแปลงข้อมูล ภาพ เป็น byte
   image = Image.fromarray(image)
   buffer = io.BytesIO()
   image.save(buffer, 'jpeg')
@@ -795,66 +788,69 @@ def image2byte(image):
 
 ```
 
+## Pre-processing
+
 
 ```python
 # Pre-processing
-import cv2
-import numpy as np
-from keras.models import load_model
-import tensorflow as tf
-from google.colab.patches import cv2_imshow
-import time
-model = load_model("./mask_detection_model")
-face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+import cv2     # OpenCV provides a real-time optimized Computer Vision library
+import numpy as np # NumPy เป็นไลบรารี่ที่เพิ่มการรองรับอาร์เรย์และเมทริกซ์ขนาดใหญ่หลายมิติ พร้อมด้วยคอลเลกชั่นฟังก์ชันทางคณิตศาสตร์ระดับสูงจำนวนมาก
+from keras.models import load_model # keras.models เพื่อทำการโหลดโมเดลจากไฟล์
+import tensorflow as tf             # TensorFlow เป็นไลบรารีซอฟต์แวร์โอเพ่นซอร์สฟรีสำหรับการเรียนรู้ของเครื่องและปัญญาประดิษฐ์
+from google.colab.patches import cv2_imshow # ใช้ cv_imshow สำหรับโชว์ภาพบนโคแลป
+model = load_model("./mask_detection_model") # ทำการโหลดโมเดล
+face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml') 
+# ใช้ haarcascade (การตรวจจับวัตถุโดยใช้ตัวแยกประเภทการเรียงซ้อนตามฟีเจอร์ของ Haar เป็นวิธีการตรวจจับวัตถุที่มีประสิทธิภาพซึ่งเสนอโดย Paul Viola และ Michael Jones)
 ```
+
+## Processing | Post-Processing
 
 
 ```python
 # processing
+# กด CTRL + M + L เพื่อโชว์ จำนวนบรรทัดใน ceil (ซึ่งเป็น คีย์ลัดของ colab)
+# model shape  shape=(None, 224, 224, 3) (รูปร่างของโมเดล ซึ่งโมเดลถูกเทรนด้วยภาพ ขนาด 224x224)
 
-# model shape  shape=(None, 224, 224, 3)
-
-labels_dict={0:'without mask',1:'mask'}
-color_dict={0:(0,0,255),1:(0,255,0)}
-
-VideoCapture()
-eval_js('create()')
-while True:
-    byte = eval_js('capture()')
-    frame = byte2image(byte)
+VideoCapture()  # เรียกใช้ฟังก์ชัน VideoCapture() เพื่อทำการเรียกใช้กล้อง ซึ่งโค้ดส่วนนี้คือ Java Script เพื่อทำให้ใช้งานกล้องใน colab ได้ โดย รศ.ดร.ปริญญา สงวนสัตย์
+eval_js('create()') 
+while True: # เริ่มต้นการ ตรวจจับใบหน้าและเช็คว่ามีแมสก์หรือไม่
+    byte = eval_js('capture()')  # เป็นข้อมูล byte ที่ได้จากการอ่านภาพจากกล้อง
+    frame = byte2image(byte) # แปลง ข้อมูล byte เป็น ภาพ ด้วยฟังก์ชัน byte2image()
     frame = cv2.flip(frame,1,1) # สลับเพื่อให้ไม่เหมือนกระจก
-    # gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    new_img = cv2.resize(frame, (frame.shape[1] // 1, frame.shape[0] // 1)) # resize
-    # สำหรับตรวจจับใบหน้า
-    faces = face_detector.detectMultiScale(new_img)
-    for x, y, w, h in faces:
+    new_img = cv2.resize(frame, (frame.shape[1] // 1, frame.shape[0] // 1)) # resize ขนาดภาพเพื่อให้ง่ายต่อการตรวจจับ
+
+    faces = face_detector.detectMultiScale(new_img) # สำหรับตรวจจับใบหน้า โดย 
+    for x, y, w, h in faces: # วนซ้ำพิกัดบนใบหน้า
       face_img = new_img[y:x+h, x:x+w] # ดึงพิกัดใบหน้า
       resized = cv2.resize(face_img, (224, 224)) # ให้ภาพใบหน้า fit กับโมเดล (224,224)
       img_array = tf.keras.preprocessing.image.img_to_array(resized) # แปลงใบหน้าเป็น array
       img_array = tf.expand_dims(img_array, 0) #ขยายมิติภาพฟิตกับโมดล
       predictions = model.predict(img_array) # ทำนายบน ROI (Region of Interest)
       score = tf.nn.softmax(predictions[0]) # ผลลัพธ์
-      label = np.argmax(score)
+      label = np.argmax(score) # หาค่าสูงสุด
 
       # Post-Processing
-
-      if label == 0:
-        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+ 
+      if label == 0: # ถ้าค่าที่ได้ เป็น 0 
+        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)  # วาดสี่เหลี่ยมรอบใบหน้า
+        cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2) # แสดงข้อความ "mask"
       elif label == 1:
-        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2) # วาดสี่เหลี่ยมรอบใบหน้า
+        cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2) # แสดงข้อความ "No mask"
       else:
         None
       # pass
       # แสดงผลหลังจากทำนาย
-      new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2RGB)
-      cv2_imshow(new_img)
-      # eval_js('showimg("{}")'.format(image2byte(new_img)))
-      print(np.argmax(score), 100 * np.max(score))
-      time.sleep(1)
+      new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2RGB) # ทำการแปลงภาพจาก ปริภูมิ BGR เป็น RGB
+      cv2_imshow(new_img) # แสดงภาพ
+      print(np.argmax(score), 100 * np.max(score)) # แสดงค่าความถูกต้อง
 
-    eval_js('showimg("{}")'.format(image2byte(frame)))
+    eval_js('showimg("{}")'.format(image2byte(frame))) # แสดงเฟรมกล้อง
+```
+
+
+```python
+
 ```
 
 </details> 
@@ -868,19 +864,14 @@ while True:
 <details>
 <summary>Face_Detection_Mask.jpynb</summary>
 <br>
-
 # Face Detection Mask
 
-reference videocapture
-  - AI บ้าน บ้าน (รศ.ดร.ปริญญา สงวนสัตย์)
-
-- https://www.youtube.com/watch?v=1VziTgVt4GQ&t=11s
-
-- https://colab.research.google.com/drive/1v4zM9Gcxt6r5pHGN8HS6CYsLTt1VoZsG
+## Introduction
 
 
 
 ```python
+# library สำหรับใช่ videocapture
 from IPython.display import display, Javascript
 from google.colab.output import eval_js
 from base64 import b64decode, b64encode
@@ -891,11 +882,37 @@ import io
 
 
 ```python
-# haarcascade
+# โหลด haarcascade เพื่อช่วยในการตรวจจับใบหน้า
 !wget https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
-# load model
+# โหลด model เพื่อทำการตรวจจับหน้ากาก
 !wget https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model
 ```
+
+    --2021-09-25 08:25:17--  https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
+    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 930127 (908K) [text/plain]
+    Saving to: ‘haarcascade_frontalface_default.xml’
+    
+    haarcascade_frontal 100%[===================>] 908.33K  --.-KB/s    in 0.05s   
+    
+    2021-09-25 08:25:18 (18.1 MB/s) - ‘haarcascade_frontalface_default.xml’ saved [930127/930127]
+    
+    --2021-09-25 08:25:18--  https://raw.githubusercontent.com/lacakp/Project-Mask-Detection/main/mask_detection_model
+    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 43065952 (41M) [application/octet-stream]
+    Saving to: ‘mask_detection_model’
+    
+    mask_detection_mode 100%[===================>]  41.07M   188MB/s    in 0.2s    
+    
+    2021-09-25 08:25:19 (188 MB/s) - ‘mask_detection_model’ saved [43065952/43065952]
+    
+    
+
+## Videocapture
 
 
 ```python
@@ -905,7 +922,7 @@ import io
 # - https://www.youtube.com/watch?v=1VziTgVt4GQ&t=11s
 # - https://colab.research.google.com/drive/1v4zM9Gcxt6r5pHGN8HS6CYsLTt1VoZsG
 
-def VideoCapture():
+def VideoCapture(): # ฟังก์ชันสำหรับเรียกใช้ VideoCapture()
   js = Javascript('''
     async function create(){
       div = document.createElement('div');
@@ -948,12 +965,12 @@ def VideoCapture():
   ''')
   display(js)
 
-def byte2image(byte):
+def byte2image(byte): # ฟังก์ชันสำหรับแปลงข้อมูล byte เป็นรูปภาพ
   jpeg = b64decode(byte.split(',')[1])
   im = Image.open(io.BytesIO(jpeg))
   return np.array(im)
 
-def image2byte(image):
+def image2byte(image): # ฟังก์ชันสำหรับแปลงข้อมูล ภาพ เป็น byte
   image = Image.fromarray(image)
   buffer = io.BytesIO()
   image.save(buffer, 'jpeg')
@@ -963,70 +980,68 @@ def image2byte(image):
 
 ```
 
+## Pre-processing
+
 
 ```python
 # Pre-processing
-import cv2
-import numpy as np
-from keras.models import load_model
-import tensorflow as tf
-from google.colab.patches import cv2_imshow
-import time
-model = load_model("./mask_detection_model")
-face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+import cv2     # OpenCV provides a real-time optimized Computer Vision library
+import numpy as np # NumPy เป็นไลบรารี่ที่เพิ่มการรองรับอาร์เรย์และเมทริกซ์ขนาดใหญ่หลายมิติ พร้อมด้วยคอลเลกชั่นฟังก์ชันทางคณิตศาสตร์ระดับสูงจำนวนมาก
+from keras.models import load_model # keras.models เพื่อทำการโหลดโมเดลจากไฟล์
+import tensorflow as tf             # TensorFlow เป็นไลบรารีซอฟต์แวร์โอเพ่นซอร์สฟรีสำหรับการเรียนรู้ของเครื่องและปัญญาประดิษฐ์
+from google.colab.patches import cv2_imshow # ใช้ cv_imshow สำหรับโชว์ภาพบนโคแลป
+model = load_model("./mask_detection_model") # ทำการโหลดโมเดล
+face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml') 
+# ใช้ haarcascade (การตรวจจับวัตถุโดยใช้ตัวแยกประเภทการเรียงซ้อนตามฟีเจอร์ของ Haar เป็นวิธีการตรวจจับวัตถุที่มีประสิทธิภาพซึ่งเสนอโดย Paul Viola และ Michael Jones)
 ```
+
+## Processing | Post-Processing
 
 
 ```python
 # processing
-# model shape  shape=(None, 224, 224, 3)
+# กด CTRL + M + L เพื่อโชว์ จำนวนบรรทัดใน ceil (ซึ่งเป็น คีย์ลัดของ colab)
+# model shape  shape=(None, 224, 224, 3) (รูปร่างของโมเดล ซึ่งโมเดลถูกเทรนด้วยภาพ ขนาด 224x224)
 
-labels_dict={0:'without mask',1:'mask'}
-color_dict={0:(0,0,255),1:(0,255,0)}
-
-VideoCapture()
-eval_js('create()')
-while True:
-    byte = eval_js('capture()')
-    frame = byte2image(byte)
+VideoCapture()  # เรียกใช้ฟังก์ชัน VideoCapture() เพื่อทำการเรียกใช้กล้อง ซึ่งโค้ดส่วนนี้คือ Java Script เพื่อทำให้ใช้งานกล้องใน colab ได้ โดย รศ.ดร.ปริญญา สงวนสัตย์
+eval_js('create()') 
+while True: # เริ่มต้นการ ตรวจจับใบหน้าและเช็คว่ามีแมสก์หรือไม่
+    byte = eval_js('capture()')  # เป็นข้อมูล byte ที่ได้จากการอ่านภาพจากกล้อง
+    frame = byte2image(byte) # แปลง ข้อมูล byte เป็น ภาพ ด้วยฟังก์ชัน byte2image()
     frame = cv2.flip(frame,1,1) # สลับเพื่อให้ไม่เหมือนกระจก
-    # gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    new_img = cv2.resize(frame, (frame.shape[1] // 1, frame.shape[0] // 1)) # resize
-    # สำหรับตรวจจับใบหน้า
-    faces = face_detector.detectMultiScale(new_img)
-    for x, y, w, h in faces:
+    new_img = cv2.resize(frame, (frame.shape[1] // 1, frame.shape[0] // 1)) # resize ขนาดภาพเพื่อให้ง่ายต่อการตรวจจับ
+
+    faces = face_detector.detectMultiScale(new_img) # สำหรับตรวจจับใบหน้า โดย 
+    for x, y, w, h in faces: # วนซ้ำพิกัดบนใบหน้า
       face_img = new_img[y:x+h, x:x+w] # ดึงพิกัดใบหน้า
       resized = cv2.resize(face_img, (224, 224)) # ให้ภาพใบหน้า fit กับโมเดล (224,224)
       img_array = tf.keras.preprocessing.image.img_to_array(resized) # แปลงใบหน้าเป็น array
       img_array = tf.expand_dims(img_array, 0) #ขยายมิติภาพฟิตกับโมดล
       predictions = model.predict(img_array) # ทำนายบน ROI (Region of Interest)
       score = tf.nn.softmax(predictions[0]) # ผลลัพธ์
-      label = np.argmax(score)
+      label = np.argmax(score) # หาค่าสูงสุด
 
       # Post-Processing
-
-      if label == 0:
-        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+ 
+      if label == 0: # ถ้าค่าที่ได้ เป็น 0 
+        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)  # วาดสี่เหลี่ยมรอบใบหน้า
+        cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2) # แสดงข้อความ "mask"
       elif label == 1:
-        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2) # วาดสี่เหลี่ยมรอบใบหน้า
+        cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2) # แสดงข้อความ "No mask"
       else:
         None
       # pass
       # แสดงผลหลังจากทำนาย
-      new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2RGB)
-      cv2_imshow(new_img)
-      # eval_js('showimg("{}")'.format(image2byte(new_img)))
-      print(np.argmax(score), 100 * np.max(score))
-      time.sleep(1)
+      new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2RGB) # ทำการแปลงภาพจาก ปริภูมิ BGR เป็น RGB
+      cv2_imshow(new_img) # แสดงภาพ
+      print(np.argmax(score), 100 * np.max(score)) # แสดงค่าความถูกต้อง
 
-    eval_js('showimg("{}")'.format(image2byte(frame)))
+    eval_js('showimg("{}")'.format(image2byte(frame))) # แสดงเฟรมกล้อง
 ```
 
 
 ```python
-|
-```
 
+```
 </details>
