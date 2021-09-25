@@ -1047,5 +1047,5 @@ while True: # เริ่มต้นการ ตรวจจับใบห�
 </details>
 
         
-![alt text](https://github.com/lacakp/Project-Mask-Detection/blob/f4c053fec6309a9f85879573f941830e5e9b73d9/DIP.png) 
+![alt text](https://github.com/lacakp/Project-Mask-Detection/blob/9b3e8497474d428fc24d58ef554be3802318ef1a/DIP.png) 
 ![alt text](https://github.com/lacakp/Project-Mask-Detection/blob/f4c053fec6309a9f85879573f941830e5e9b73d9/ML.png) 
