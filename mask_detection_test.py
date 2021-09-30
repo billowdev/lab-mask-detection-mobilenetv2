@@ -11,7 +11,7 @@ import os
 # https://data-flair.training/blogs/face-mask-detection-with-python/
 # Real-Time Face Mask Detector with Python, OpenCV, Keras
 
-model=load_model("./mask_detection_model.h5")
+model=load_model("./mask_detection_model")
 
 labels_dict={0:'without mask',1:'mask'}
 color_dict={0:(0,0,255),1:(0,255,0)}
@@ -19,26 +19,18 @@ color_dict={0:(0,0,255),1:(0,255,0)}
 size = 4
 webcam = cv2.VideoCapture(0) #Use camera 0
 
-
+dirname = os.path.dirname(__file__)
 f_haar_path = os.path.join(dirname, 'haarcascade_frontalface_default.xml') # path ของ haarcascade face
 # ใช้ haarcascade classifier
-classifier = cv2.CascadeClassifier(f_haar_path)
+face_detector = cv2.CascadeClassifier(f_haar_path)
 
 while True:
-	img = webcam.read()
-	img = cv2.flip(img,1,1) # สลับเพื่อให้เหมือนส่งกระจก
-
-	# ลดขนาดภาพเพื่อความเร็ว
-	mini = cv2.resize(img, (img.shape[1] // size, img.shape[0] // size))
-
+	frame = webcam.read()
+	# gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	# new_img = cv2.resize(gray, (gray.shape[1] // 1, gray.shape[0] // 1)) # resize
+	print(frame)
 	# สำหรับตรวจจับใบหน้า
-	faces = classifier.detectMultiScale(mini)
-
-	# gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-	new_img = cv2.resize(frame, (frame.shape[1] // 1, frame.shape[0] // 1)) # resize
-	
-	# สำหรับตรวจจับใบหน้า
-	faces = face_detector.detectMultiScale(new_img)
+	faces = face_detector.detectMultiScale(frame, 1.3, 5)
 
 	for x, y, w, h in faces:
 		face_img = new_img[y:x+h, x:x+w] # ดึงพิกัดใบหน้า
@@ -52,13 +44,13 @@ while True:
 		# Post-Processing
 
 		if label == 0:
-		cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-		cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+			cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+			cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 		elif label == 1:
-		cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-		cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+			cv2.rectangle(new_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+			cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 		else:
-		None
+			None
 		# pass
 		# แสดงผลหลังจากทำนาย
 		new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2RGB)
