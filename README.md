@@ -12,6 +12,7 @@ Digital Image Processing
 <details>
 <summary> Project_Mask_Detection_Train_Model.ipynb </summary>
 <br>
+
 # Introduction
 
 Project Mask Detection training model use machine learning
