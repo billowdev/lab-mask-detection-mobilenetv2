@@ -5,6 +5,7 @@ pip install tensorflow
 import cv2
 import numpy as np
 from keras.models import load_model
+from tensorflow import tf
 import os
 
 # ref : DataFlair
@@ -57,7 +58,7 @@ while True:
 		cv2.imshow('liveimg', new_img)
 		# eval_js('showimg("{}")'.format(image2byte(new_img)))
 		print(np.argmax(score), 100 * np.max(score))
-		time.sleep(1)
+
 
 	
 	key = cv2.waitKey(10)
