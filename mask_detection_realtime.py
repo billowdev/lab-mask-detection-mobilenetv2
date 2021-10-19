@@ -8,6 +8,7 @@ from keras.models import load_model
 import tensorflow as tf
 import os
 import time
+
 #
 import playsound
 #
@@ -24,7 +25,7 @@ f_haar_path = os.path.join(dirname, 'haarcascade_frontalface_default.xml') # pat
 face_detector = cv2.CascadeClassifier(f_haar_path)
 
 #read video
-webcam = cv2.VideoCapture(1)
+webcam = cv2.VideoCapture(0)
 ret, img = webcam.read()
 img_h, img_w = img.shape[:2]
 size = 4
@@ -50,17 +51,18 @@ while True:
 		if label == 0:
 			cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 			time.sleep(2)
-			playsound.playsound('thxwarmask.mp3', True)
+
+
 		if label == 1:
 			cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 			time.sleep(2)
-			playsound.playsound('wearmask.mp3', True)
+
 		# pass
 		# แสดงผลหลังจากทำนาย
-		new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2RGB)
-		cv2.imshow('live-Image', new_img)
-		# eval_js('showimg("{}")'.format(image2byte(new_img)))
-		# print(np.argmax(score), 100 * np.max(score))
+	new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2RGB)
+	cv2.imshow('live-Image', new_img)
+	# eval_js('showimg("{}")'.format(image2byte(new_img)))
+	# print(np.argmax(score), 100 * np.max(score))
 
 
 	# if Esc key is press then break out of the loop 

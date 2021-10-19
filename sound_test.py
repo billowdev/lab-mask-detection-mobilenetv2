@@ -10,4 +10,4 @@ def createSound(text='กรุณาสวมแมสก์', lang='th', filen
 
 # createSound('ขอบคุณที่สวมแมสก์', 'th', 'thxwarmask.mp3')
 
-# playsound.playsound('wearmask.mp3', True)
+playsound.playsound('wearmask.mp3', True)

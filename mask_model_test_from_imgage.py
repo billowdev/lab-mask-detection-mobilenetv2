@@ -7,7 +7,6 @@ import os
 dirname = os.path.dirname(__file__)
 f_haar_path = os.path.join(dirname, 'haarcascade_frontalface_default.xml') # path ของ haarcascade face
 face_detector = cv2.CascadeClassifier(f_haar_path)
-
 model=load_model("./mask_detection_model")
 
 def Detection(img):
@@ -36,9 +35,11 @@ def Detection(img):
 
 image = cv2.imread('with_mask_1022.jpg')   # mask
 image2 = cv2.imread('output_17_0.png')   # nomask
+
 Detection(image)
 Detection(image2)
 
 # cv2.imshow("image", new_img)
 cv2.waitKey(0) 
 cv2.destroyAllWindows() 
+
