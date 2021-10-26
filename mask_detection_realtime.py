@@ -50,12 +50,9 @@ while True:
 		cv2.rectangle(new_img, (x, y), (x+w, y+h), (255, 0, 0), 2)
 		if label == 0:
 			cv2.putText(new_img, "mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-			time.sleep(2)
-
 
 		if label == 1:
 			cv2.putText(new_img, "No mask", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-			time.sleep(2)
 
 		# pass
 		# แสดงผลหลังจากทำนาย
