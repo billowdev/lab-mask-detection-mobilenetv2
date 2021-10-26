@@ -27,15 +27,15 @@ cap = cv2.VideoCapture(0)
 def play_sound(label):
 	try:
 		if label == 0:
-			playsound.playsound('thxwarmask.mp3', True)
-			time.sleep(2)
+			playsound.playsound('thxwearmask.mp3', True)
+			time.sleep(1)
 	except:
 		pass
 
 	try:
 		if label == 1:
 			playsound.playsound('wearmask.mp3', True)
-			time.sleep(2)
+			time.sleep(1)
 	except:
 		pass
 
