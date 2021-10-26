@@ -1,6 +1,9 @@
 # Project-Mask-Detection
 Digital Image Processing
 
+# https://teachablemachine.withgoogle.com/train/image
+
+
 ## Model 
 - image shape 224 x 224
 - mask_detection_model.h5
