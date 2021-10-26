@@ -29,7 +29,7 @@ def play_sound(label):
 		if label == 0:
 			playsound.playsound('thxwarmask.mp3', True)
 			time.sleep(2)
-		elif label == 1:
+		if label == 1:
 			playsound.playsound('wearmask.mp3', True)
 			time.sleep(2)
 		else:
